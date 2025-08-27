@@ -523,7 +523,7 @@ async def startup_event():
     
     # Test database connection
     try:
-        await db.admin.command('ismaster')
+        await client.admin.command('ismaster')
         logger.info("✓ Database connection established")
     except Exception as e:
         logger.error(f"✗ Database connection failed: {str(e)}")
