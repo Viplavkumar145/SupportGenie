@@ -40,7 +40,7 @@ class ChatMessage(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     session_id: str = Field(..., min_length=1, max_length=100)
     message: str = Field(..., min_length=1, max_length=2000)
-    sender: str = Field(..., regex="^(user|ai)$")
+    sender: str = Field(..., pattern="^(user|ai)$")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     escalated: bool = False
     response_time: Optional[float] = None
