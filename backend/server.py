@@ -48,7 +48,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     session_id: str = Field(..., min_length=1, max_length=100)
-    brand_tone: str = Field(default="friendly", regex="^(friendly|formal|casual)$")
+    brand_tone: str = Field(default="friendly", pattern="^(friendly|formal|casual)$")
 
     @validator('message')
     def validate_message(cls, v):
