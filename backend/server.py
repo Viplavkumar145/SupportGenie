@@ -461,7 +461,7 @@ async def get_analytics():
 async def health_check():
     try:
         # Test database connection
-        await db.admin.command('ismaster')
+        await client.admin.command('ismaster')
         
         # Test AI service
         api_key = os.environ.get('EMERGENT_LLM_KEY')
