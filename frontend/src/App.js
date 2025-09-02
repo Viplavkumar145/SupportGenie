@@ -1045,7 +1045,7 @@ function App() {
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <div className="flex items-center gap-2">
                   <Heart className="w-4 h-4 text-red-500" />
-                  <span>Made with love using <strong>Emergent AI Platform</strong></span>
+                  <span>Made with love</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span>SupportGenie v1.0</span>
