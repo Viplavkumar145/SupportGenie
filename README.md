@@ -31,4 +31,4 @@ SupportGenie provides:
 - 🔄 **Smart Escalation** – passes context to human agents  
 - 🌍 **Multi-channel Support** – integrate with website, email, WhatsApp, Slack  
 - 📊 **Analytics Dashboard** – track automation %, hours saved, and customer satisfaction  
-- 🧠 **Self-Lea**
+- 🧠 **Self-Learning**
