@@ -1039,18 +1039,13 @@ function App() {
                 </div>
               )}
             </main>
-
             {/* Footer */}
             <footer className="bg-white border-t border-gray-100 px-6 py-4">
               <div className="flex items-center justify-between text-sm text-gray-500">
-                <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-red-500" />
-                  <span>Made with love</span>
-                </div>
                 <div className="flex items-center gap-4">
-                  <span>SupportGenie v1.0</span>
-                  <span>•</span>
-                  <span>Powered by OpenAI GPT-4o</span>
+                  <span> SupportGenie v1.0</span>
+                  <span> • </span>
+                  <span> Powered by OpenAI GPT-4o </span>
                 </div>
               </div>
             </footer>
