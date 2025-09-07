@@ -32,7 +32,7 @@ def chat():
         
         # Create chat completion using new OpenAI API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Using 3.5-turbo as it's more cost-effective
+            model="gpt-3.5-turbo",
             messages=[
                 {
                     "role": "system", 
@@ -67,12 +67,10 @@ def chat():
 
 @app.route('/api/knowledge-base', methods=['GET'])
 def get_knowledge_base():
-    # Return empty for now - you can add this feature later
     return jsonify([])
 
 @app.route('/api/analytics', methods=['GET'])
 def get_analytics():
-    # Return mock analytics for now
     return jsonify({
         'total_conversations': 0,
         'ai_handled': 0,
