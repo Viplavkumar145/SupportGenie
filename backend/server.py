@@ -11,7 +11,8 @@ import uuid
 from datetime import datetime, timezone
 import asyncio
 import time
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+import openai
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -24,6 +25,9 @@ try:
 except Exception as e:
     logging.error(f"Failed to connect to MongoDB: {str(e)}")
     raise
+
+# OpenAI configuration
+openai.api_key = os.environ.get('OPENAI_API_KEY')
 
 # Create the main app without a prefix
 app = FastAPI(
@@ -135,7 +139,7 @@ Remember: Your goal is to provide excellent customer support while maintaining t
     
     return base_message
 
-# Enhanced AI response function with better error handling
+# Enhanced AI response function using OpenAI directly
 async def get_ai_response(message: str, session_id: str, brand_tone: str = "friendly") -> tuple[str, bool, float]:
     start_time = time.time()
     
@@ -149,7 +153,7 @@ async def get_ai_response(message: str, session_id: str, brand_tone: str = "frie
         
         # Get knowledge base content with error handling
         try:
-            kb_documents = await db.knowledge_base.find().to_list(length=50)  # Limit for performance
+            kb_documents = await db.knowledge_base.find().to_list(length=50)
             knowledge_content = "\n\n".join([
                 f"Document: {doc.get('filename', 'Unknown')}\n{doc.get('content', '')}" 
                 for doc in kb_documents if doc.get('content')
@@ -160,27 +164,32 @@ async def get_ai_response(message: str, session_id: str, brand_tone: str = "frie
         
         system_message = get_system_message(brand_tone, knowledge_content)
         
-        # Enhanced LLM configuration
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        # Check if OpenAI API key is configured
+        api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
-            raise ValueError("EMERGENT_LLM_KEY not configured")
+            raise ValueError("OPENAI_API_KEY not configured")
         
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"supportgenie_{session_id}",
-            system_message=system_message
-        ).with_model("openai", "gpt-4o")
+        # Create OpenAI chat completion
+        response = await asyncio.to_thread(
+            openai.ChatCompletion.create,
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=500,
+            temperature=0.7
+        )
         
-        user_message = UserMessage(text=message)
-        response = await chat.send_message(user_message)
+        ai_message = response.choices[0].message.content.strip()
         
-        if not response:
+        if not ai_message:
             return "I apologize, but I'm having trouble generating a response right now. Let me connect you with a human agent.", True, 0.0
         
         # Enhanced escalation detection
         escalated = False
         escalation_indicators = [
-            response.startswith("ESCALATE:"),
+            ai_message.startswith("ESCALATE:"),
             any(keyword in message.lower() for keyword in [
                 "manager", "supervisor", "refund", "complaint", "cancel", 
                 "billing", "angry", "frustrated", "terrible", "worst"
@@ -191,16 +200,16 @@ async def get_ai_response(message: str, session_id: str, brand_tone: str = "frie
         
         if any(escalation_indicators):
             escalated = True
-            if response.startswith("ESCALATE:"):
-                response = response.replace("ESCALATE:", "").strip()
+            if ai_message.startswith("ESCALATE:"):
+                ai_message = ai_message.replace("ESCALATE:", "").strip()
             
-            if not response.strip():
-                response = "I understand this requires special attention. Let me connect you with one of our human agents who can help you better."
+            if not ai_message.strip():
+                ai_message = "I understand this requires special attention. Let me connect you with one of our human agents who can help you better."
         
         # Calculate response time
         response_time = round(time.time() - start_time, 2)
         
-        return response, escalated, response_time
+        return ai_message, escalated, response_time
         
     except asyncio.TimeoutError:
         return "I apologize for the delay. Our AI service is experiencing high load. Let me connect you with a human agent.", True, 0.0
@@ -464,7 +473,7 @@ async def health_check():
         await client.admin.command('ismaster')
         
         # Test AI service
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        api_key = os.environ.get('OPENAI_API_KEY')
         ai_status = "configured" if api_key else "not_configured"
         
         return {
@@ -529,11 +538,11 @@ async def startup_event():
         logger.error(f"✗ Database connection failed: {str(e)}")
     
     # Check AI service configuration
-    api_key = os.environ.get('EMERGENT_LLM_KEY')
+    api_key = os.environ.get('OPENAI_API_KEY')
     if api_key:
-        logger.info("✓ AI service configured")
+        logger.info("✓ OpenAI API configured")
     else:
-        logger.warning("✗ AI service not configured (EMERGENT_LLM_KEY missing)")
+        logger.warning("✗ OpenAI API not configured (OPENAI_API_KEY missing)")
     
     logger.info("SupportGenie API ready!")
 
