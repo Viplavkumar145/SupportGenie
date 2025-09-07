@@ -42,7 +42,7 @@ import {
   Heart
 } from "lucide-react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 const API = `${BACKEND_URL}/api`;
 
 function App() {
@@ -125,27 +125,6 @@ function App() {
         escalated: response.data.escalated
       };
       
-      setMessages(prev => [...prev, aiMessage]);
-      loadAnalytics(); // Refresh analytics after each conversation
-      
-    } catch (error) {
-      console.error("Error sending message:", error);
-      let errorMessage = "Sorry, I'm having trouble connecting right now. Please try again.";
-      
-      if (error.response?.status === 500) {
-        errorMessage = "Our AI service is temporarily unavailable. Please try again in a moment.";
-      } else if (error.code === 'ECONNABORTED') {
-        errorMessage = "Request timed out. Please check your connection and try again.";
-      }
-      
-      showError("chat", errorMessage);
-      
-      const errorAiMessage = {
-        id: Date.now().toString() + "_error",
-        message: errorMessage,
-        sender: "ai",
-        timestamp: new Date().toISOString()
-      };
       setMessages(prev => [...prev, errorAiMessage]);
     } finally {
       setIsLoading(false);
@@ -513,7 +492,7 @@ function App() {
                 </div>
               )}
 
-              {/* Chat Tab */}
+              {/* Chat Tab - Similar structure as before */}
               {activeTab === "chat" && (
                 <div className="space-y-6">
                   <div className="grid lg:grid-cols-3 gap-6">
@@ -526,14 +505,6 @@ function App() {
                           {messages.length === 0 && (
                             <Badge variant="outline">Demo Mode</Badge>
                           )}
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className="w-4 h-4 text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Test your AI responses here. Messages are saved and used for analytics.</p>
-                            </TooltipContent>
-                          </Tooltip>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-0">
@@ -597,24 +568,17 @@ function App() {
                               rows={1}
                               disabled={isLoading}
                             />
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  onClick={sendMessage} 
-                                  disabled={isLoading || !currentMessage.trim()}
-                                  className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
-                                >
-                                  {isLoading ? (
-                                    <div className="loading-spinner"></div>
-                                  ) : (
-                                    <Send className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Send message (Enter)</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            <Button 
+                              onClick={sendMessage} 
+                              disabled={isLoading || !currentMessage.trim()}
+                              className="bg-gradient-to-r from-teal-600 to-blue-600"
+                            >
+                              {isLoading ? (
+                                <div className="loading-spinner"></div>
+                              ) : (
+                                <Send className="w-4 h-4" />
+                              )}
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -622,20 +586,9 @@ function App() {
 
                     {/* Control Panel */}
                     <div className="space-y-6">
-                      {/* Brand Tone Settings */}
                       <Card className="glass-card">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-lg">
-                            Brand Tone
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <HelpCircle className="w-4 h-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Choose how your AI communicates with customers</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </CardTitle>
+                          <CardTitle className="text-lg">Brand Tone</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Select value={brandTone} onValueChange={setBrandTone}>
@@ -650,33 +603,6 @@ function App() {
                           </Select>
                         </CardContent>
                       </Card>
-
-                      {/* Channel Integration */}
-                      <Card className="glass-card">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Multi-Channel Support</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg border border-green-200 hover-lift cursor-pointer">
-                              <Globe className="w-6 h-6 text-green-600 mb-1" />
-                              <span className="text-sm font-medium text-green-800">Website</span>
-                            </div>
-                            <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg border border-blue-200 hover-lift cursor-pointer">
-                              <Mail className="w-6 h-6 text-blue-600 mb-1" />
-                              <span className="text-sm font-medium text-blue-800">Email</span>
-                            </div>
-                            <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg border border-green-200 hover-lift cursor-pointer">
-                              <MessageSquare className="w-6 h-6 text-green-600 mb-1" />
-                              <span className="text-sm font-medium text-green-800">WhatsApp</span>
-                            </div>
-                            <div className="flex flex-col items-center p-3 bg-purple-50 rounded-lg border border-purple-200 hover-lift cursor-pointer">
-                              <Smartphone className="w-6 h-6 text-purple-600 mb-1" />
-                              <span className="text-sm font-medium text-purple-800">Slack</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
                     </div>
                   </div>
                 </div>
@@ -686,20 +612,11 @@ function App() {
               {activeTab === "knowledge" && (
                 <div className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* Upload Section */}
                     <Card className="glass-card">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Upload className="w-5 h-5 text-teal-600" />
                           Upload Knowledge Base
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className="w-4 h-4 text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Upload FAQs, documentation, or support content to train your AI</p>
-                            </TooltipContent>
-                          </Tooltip>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -728,13 +645,10 @@ function App() {
                         <Button 
                           onClick={uploadKnowledgeBase} 
                           disabled={!uploadFile || isUploading}
-                          className="w-full bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
+                          className="w-full bg-gradient-to-r from-teal-600 to-blue-600"
                         >
                           {isUploading ? (
-                            <>
-                              <div className="loading-spinner mr-2"></div>
-                              Uploading...
-                            </>
+                            <>Uploading...</>
                           ) : (
                             <>
                               <Upload className="w-4 h-4 mr-2" />
@@ -745,7 +659,6 @@ function App() {
                       </CardContent>
                     </Card>
 
-                    {/* Current Knowledge Base */}
                     <Card className="glass-card">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -755,47 +668,27 @@ function App() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {errors.knowledgeBase && (
-                          <Alert className="mb-3 bg-red-50 border-red-200">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription className="text-red-800">{errors.knowledgeBase}</AlertDescription>
-                          </Alert>
-                        )}
-                        
                         {knowledgeBase.length === 0 ? (
                           <div className="text-center py-8">
                             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                             <p className="text-gray-500">No documents uploaded yet</p>
-                            <p className="text-sm text-gray-400">Upload your first document to get started</p>
                           </div>
                         ) : (
                           <div className="space-y-3 max-h-64 overflow-y-auto">
                             {knowledgeBase.map((item) => (
-                              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover-lift">
+                              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div className="flex items-center gap-2">
                                   <FileText className="w-4 h-4 text-teal-600" />
-                                  <div>
-                                    <span className="text-sm font-medium">{item.filename}</span>
-                                    <p className="text-xs text-gray-500">
-                                      {new Date(item.uploaded_at).toLocaleDateString()}
-                                    </p>
-                                  </div>
+                                  <span className="text-sm font-medium">{item.filename}</span>
                                 </div>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => deleteKnowledgeItem(item.id)}
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete this item</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteKnowledgeItem(item.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             ))}
                           </div>
@@ -809,120 +702,51 @@ function App() {
               {/* Analytics Tab */}
               {activeTab === "analytics" && (
                 <div className="space-y-6">
-                  {errors.analytics && (
-                    <Alert className="bg-red-50 border-red-200">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="text-red-800">{errors.analytics}</AlertDescription>
-                    </Alert>
-                  )}
-                  
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card className="glass-card hover-lift">
+                    <Card className="glass-card">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-600">Total Conversations</p>
                             <p className="text-3xl font-bold text-gray-900">{analytics.total_conversations || 0}</p>
-                            <p className="text-xs text-green-600 mt-1">↗ +12% this week</p>
                           </div>
                           <MessageCircle className="w-12 h-12 text-blue-600 opacity-80" />
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="glass-card hover-lift">
+                    <Card className="glass-card">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-600">AI Handled</p>
                             <p className="text-3xl font-bold text-gray-900">{analytics.ai_handled || 0}</p>
-                            <p className="text-xs text-green-600 mt-1">
-                              {analytics.total_conversations ? 
-                                Math.round((analytics.ai_handled / analytics.total_conversations) * 100) : 0}% automation
-                            </p>
                           </div>
                           <Bot className="w-12 h-12 text-teal-600 opacity-80" />
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="glass-card hover-lift">
+                    <Card className="glass-card">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-600">Escalated</p>
                             <p className="text-3xl font-bold text-gray-900">{analytics.escalated || 0}</p>
-                            <p className="text-xs text-orange-600 mt-1">Need attention</p>
                           </div>
                           <Users className="w-12 h-12 text-orange-600 opacity-80" />
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="glass-card hover-lift">
+                    <Card className="glass-card">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-600">Time Saved</p>
                             <p className="text-3xl font-bold text-gray-900">{analytics.time_saved_hours || 0}h</p>
-                            <p className="text-xs text-green-600 mt-1">This month</p>
                           </div>
                           <Clock className="w-12 h-12 text-green-600 opacity-80" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <Card className="glass-card">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5 text-teal-600" />
-                          Performance Metrics
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-sm font-medium">Automation Rate</span>
-                          <span className="text-sm text-green-600 font-bold">
-                            {analytics.total_conversations ? 
-                              Math.round((analytics.ai_handled / analytics.total_conversations) * 100) : 0}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-sm font-medium">Avg Response Time</span>
-                          <span className="text-sm text-blue-600 font-bold">{analytics.avg_response_time || 0.8}s</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-sm font-medium">Customer Satisfaction</span>
-                          <span className="text-sm text-yellow-600 font-bold">★ {analytics.satisfaction_score || 4.6}/5</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-sm font-medium">Knowledge Base Items</span>
-                          <span className="text-sm text-teal-600 font-bold">{knowledgeBase.length}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="glass-card">
-                      <CardHeader>
-                        <CardTitle>Business Impact</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                          <h3 className="text-2xl font-bold text-green-800">${Math.round((analytics.time_saved_hours || 0) * 25)}</h3>
-                          <p className="text-green-600 text-sm">Cost Savings (Est.)</p>
-                          <p className="text-xs text-green-500 mt-1">Based on $25/hour agent cost</p>
-                        </div>
-                        <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <h3 className="text-2xl font-bold text-blue-800">24/7</h3>
-                          <p className="text-blue-600 text-sm">Availability</p>
-                          <p className="text-xs text-blue-500 mt-1">Never miss a customer</p>
-                        </div>
-                        <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-                          <h3 className="text-2xl font-bold text-purple-800">∞</h3>
-                          <p className="text-purple-600 text-sm">Scalability</p>
-                          <p className="text-xs text-purple-500 mt-1">Handle unlimited conversations</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -933,27 +757,14 @@ function App() {
               {/* Settings Tab */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
-                  <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="max-w-2xl mx-auto">
                     <Card className="glass-card">
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Settings className="w-5 h-5 text-teal-600" />
-                          AI Configuration
-                        </CardTitle>
+                        <CardTitle>AI Configuration</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-6">
                         <div>
-                          <Label htmlFor="default-tone" className="flex items-center gap-2">
-                            Default Brand Tone
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <HelpCircle className="w-4 h-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Sets the default communication style for your AI</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </Label>
+                          <Label>Default Brand Tone</Label>
                           <Select value={brandTone} onValueChange={setBrandTone}>
                             <SelectTrigger className="mt-1">
                               <SelectValue />
@@ -965,42 +776,8 @@ function App() {
                             </SelectContent>
                           </Select>
                         </div>
-                        
-                        <div>
-                          <Label htmlFor="escalation-keywords" className="flex items-center gap-2">
-                            Escalation Keywords
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <HelpCircle className="w-4 h-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Keywords that trigger escalation to human agents</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </Label>
-                          <Textarea
-                            id="escalation-keywords"
-                            placeholder="refund, complaint, manager, cancel subscription, angry, frustrated"
-                            className="mt-1"
-                            rows={3}
-                          />
-                          <p className="text-sm text-gray-500 mt-1">
-                            Enter keywords separated by commas
-                          </p>
-                        </div>
 
-                        <div>
-                          <Label htmlFor="business-hours">Business Hours</Label>
-                          <div className="grid grid-cols-2 gap-4 mt-1">
-                            <Input placeholder="9:00 AM" />
-                            <Input placeholder="6:00 PM" />
-                          </div>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Set your business hours for escalation timing
-                          </p>
-                        </div>
-
-                        <Button className="w-full bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700">
+                        <Button className="w-full bg-gradient-to-r from-teal-600 to-blue-600">
                           <Settings className="w-4 h-4 mr-2" />
                           Save Configuration
                         </Button>
@@ -1026,26 +803,20 @@ function App() {
                           </div>
                           <Badge className="bg-green-100 text-green-800">Connected</Badge>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span className="font-medium text-blue-800">API Status</span>
-                          </div>
-                          <Badge className="bg-blue-100 text-blue-800">Operational</Badge>
-                        </div>
                       </CardContent>
                     </Card>
                   </div>
                 </div>
               )}
             </main>
+
             {/* Footer */}
             <footer className="bg-white border-t border-gray-100 px-6 py-4">
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <div className="flex items-center gap-4">
-                  <span> SupportGenie v1.0</span>
-                  <span> • </span>
-                  <span> Powered by OpenAI GPT-4o </span>
+                  <span>SupportGenie v1.0</span>
+                  <span>•</span>
+                  <span>Powered by OpenAI GPT-4</span>
                 </div>
               </div>
             </footer>
@@ -1057,3 +828,25 @@ function App() {
 }
 
 export default App;
+                       => [...prev, aiMessage]);
+      loadAnalytics(); // Refresh analytics after each conversation
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      let errorMessage = "Sorry, I'm having trouble connecting right now. Please try again.";
+      
+      if (error.response?.status === 500) {
+        errorMessage = "Our AI service is temporarily unavailable. Please try again in a moment.";
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+      }
+      
+      showError("chat", errorMessage);
+      
+      const errorAiMessage = {
+        id: Date.now().toString() + "_error",
+        message: errorMessage,
+        sender: "ai",
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev
